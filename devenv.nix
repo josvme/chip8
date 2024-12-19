@@ -5,7 +5,16 @@
   env.GREET = "devenv";
 
   # https://devenv.sh/packages/
-  packages = [ pkgs.git ];
+  packages = [
+     pkgs.git
+     pkgs.SDL2
+     pkgs.SDL2_gfx
+     pkgs.SDL2_ttf
+     pkgs.SDL2_net
+     pkgs.SDL2_sound
+     pkgs.SDL2_mixer
+     pkgs.SDL2_image
+  ];
 
   # https://devenv.sh/languages/
   languages.go = {
