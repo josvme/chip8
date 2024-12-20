@@ -1,8 +1,10 @@
 package core
 
 import (
+	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
+	"os"
 )
 
 const SCREEN_WIDTH = 64
@@ -10,9 +12,9 @@ const SCREEN_HEIGHT = 32
 
 type Emulator struct {
 	cpu      Cpu
-	mem      Memory
+	mem      *Memory
 	display  IDisplay
-	sound    Sound
+	sound    ISound
 	input    Input
 	window   *sdl.Window
 	renderer *sdl.Renderer
@@ -25,17 +27,28 @@ func (emu *Emulator) FillScreenForDebug() {
 }
 
 func NewEmulator() *Emulator {
+	display := NewDisplay()
+	sound := NewSound()
+	memory := NewMemory()
+	// Read file and load to memory
+	rom, err := os.ReadFile("./roms/BC_test.ch8")
+	if err != nil {
+		panic("Unable to read rom")
+	}
+	memory.LoadDisk(rom)
 	return &Emulator{
-		cpu:     NewCpu(),
-		mem:     NewMemory(),
-		display: NewDisplay(),
-		sound:   NewSound(),
+		cpu:     NewCpu(display, sound, memory),
+		mem:     memory,
+		display: display,
+		sound:   sound,
 		input:   NewInput(),
 	}
 }
 
 func (emu *Emulator) Run() {
+	fmt.Println("Starting Emulator")
 	emu.initialize()
+	go emu.cpu.Run()
 	for emu.running {
 		emu.drawScreen()
 		emu.handleInput()
@@ -78,7 +91,7 @@ func (emu *Emulator) handleInput() {
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 		switch event.(type) {
 		case *sdl.QuitEvent: // NOTE: Please use `*sdl.QuitEvent` for `v0.4.x` (current version).
-			println("Quit")
+			println("Emulator Stopped")
 			emu.running = false
 			break
 		}

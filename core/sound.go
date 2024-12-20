@@ -6,8 +6,8 @@ type ISound interface {
 type Sound struct {
 }
 
-func NewSound() Sound {
-	return Sound{}
+func NewSound() ISound {
+	return &Sound{}
 }
 
 func (s *Sound) beep() {
