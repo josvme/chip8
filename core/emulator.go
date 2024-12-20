@@ -15,7 +15,7 @@ type Emulator struct {
 	mem      *Memory
 	display  IDisplay
 	sound    ISound
-	input    Input
+	input    IInput
 	window   *sdl.Window
 	renderer *sdl.Renderer
 	texture  *sdl.Texture
@@ -31,7 +31,9 @@ func NewEmulator() *Emulator {
 	sound := NewSound()
 	memory := NewMemory()
 	// Read file and load to memory
-	rom, err := os.ReadFile("./roms/BC_test.ch8")
+	//rom, err := os.ReadFile("./roms/testrom/BC_test.ch8")
+	rom, err := os.ReadFile("./roms/demos/Zero Demo [zeroZshadow, 2007].ch8")
+	// rom, err := os.ReadFile("./roms/demos/Maze (alt) [David Winter, 199x].ch8")
 	if err != nil {
 		panic("Unable to read rom")
 	}
@@ -109,9 +111,9 @@ func (emu *Emulator) drawScreen() {
 		for x := 0; x < SCREEN_WIDTH; x++ {
 			offset := y*pitch + x*4 // Calculate the offset in the pixel buffer
 			// Generate random ARGB values
-			pixels[offset+0] = 0                                   // Blue
+			pixels[offset+0] = 255 * emu.display.getScreen()[x][y] // Blue
 			pixels[offset+1] = 255 * emu.display.getScreen()[x][y] // Green
-			pixels[offset+2] = 0                                   // Red
+			pixels[offset+2] = 255 * emu.display.getScreen()[x][y] // Red
 			pixels[offset+3] = 255                                 // Alpha (fully opaque)
 		}
 	}
@@ -123,6 +125,6 @@ func (emu *Emulator) drawScreen() {
 	emu.renderer.Clear()
 	emu.renderer.Copy(emu.texture, nil, nil)
 	emu.renderer.Present()
-	// 30 FPS
-	sdl.Delay(33)
+	// 60 FPS
+	sdl.Delay(16)
 }
