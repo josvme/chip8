@@ -1,15 +1,19 @@
 package core
 
+const loadAddress = 512
+
 type Memory struct {
-	Mem          [4096]byte
-	Start        int
-	ProgramStart int
+	Mem [4096]byte
 }
 
-func NewMemory() Memory {
-	return Memory{
-		Mem:          [4096]byte{},
-		Start:        0,
-		ProgramStart: 512,
+func NewMemory() *Memory {
+	return &Memory{
+		Mem: [4096]byte{},
+	}
+}
+
+func (m *Memory) LoadDisk(data []byte) {
+	for i := 0; i < len(data); i++ {
+		m.Mem[loadAddress+i] = data[i]
 	}
 }
