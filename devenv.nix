@@ -43,6 +43,8 @@
   #   "devenv:enterShell".after = [ "myproj:setup" ];
   # };
 
+  env.hardeningDisable = ["all"];
+
   # https://devenv.sh/tests/
   enterTest = ''
     echo "Running tests"
