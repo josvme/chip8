@@ -3,13 +3,20 @@ package core
 type IInput interface {
 	isKeyPressed(key byte) bool
 	scanKey() byte
+	registerKeyPress(key byte)
+	clearKeyPress(key byte)
 }
+
 type Input struct {
 	keysPressed map[byte]bool
 }
 
 func (inp *Input) isKeyPressed(key byte) bool {
 	return inp.keysPressed[key]
+}
+
+func (inp *Input) registerKeyPress(key byte) {
+	inp.keysPressed[key] = true
 }
 
 func (inp *Input) scanKey() byte {
@@ -20,6 +27,10 @@ func (inp *Input) scanKey() byte {
 			}
 		}
 	}
+}
+
+func (inp *Input) clearKeyPress(key byte) {
+	inp.keysPressed[key] = false
 }
 
 func NewInput() IInput {

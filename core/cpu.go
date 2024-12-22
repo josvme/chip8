@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 	"time"
 )
 
@@ -30,7 +29,7 @@ type CpuInternals struct {
 	Stack [16]uint16
 }
 
-func NewCpu(display IDisplay, sound ISound, memory *Memory) Cpu {
+func NewCpu(display IDisplay, sound ISound, memory *Memory, input IInput) Cpu {
 	keymap := make(map[byte]uint16)
 	for i := 0; i < 16; i++ {
 		keymap[byte(i)] = uint16(i * 5)
@@ -48,17 +47,27 @@ func NewCpu(display IDisplay, sound ISound, memory *Memory) Cpu {
 		display: display,
 		sound:   sound,
 		memory:  memory,
+		input:   input,
 		keyMap:  keymap,
 	}
 }
 
 func (cpu *Cpu) Run() {
+	t1 := time.Now().UnixMilli()
 	for {
 		pc := cpu.internals.PC
 		inst := cpu.memory.Mem[pc : pc+2]
-		fmt.Println(pc, hex.EncodeToString(inst))
+		//fmt.Println(pc, hex.EncodeToString(inst))
 		cpu.executeInstruction(inst)
-		time.Sleep(2 * time.Millisecond)
+		time.Sleep(1 * time.Millisecond)
+		t2 := time.Now().UnixMilli()
+		// 60 Hz Delay counter
+		if t2-t1 > 15 {
+			t1 = t2
+			if cpu.internals.Delay > 0 {
+				cpu.internals.Delay -= 1
+			}
+		}
 	}
 }
 
@@ -78,7 +87,7 @@ func (cpu *Cpu) executeInstruction(inst []byte) {
 	case high == 1:
 		state.PC = binary.BigEndian.Uint16([]byte{x, inst[1]})
 	case high == 2:
-		state.Stack[state.SP] = state.PC
+		state.Stack[state.SP] = state.PC + 2
 		state.SP += 1
 		state.PC = binary.BigEndian.Uint16([]byte{x, inst[1]})
 	case high == 3:
@@ -170,6 +179,7 @@ func (cpu *Cpu) executeInstruction(inst []byte) {
 	case high == 0xE && inst[1] == 0x9E:
 		if cpu.input.isKeyPressed(state.V[x]) {
 			state.PC += 2
+			cpu.input.clearKeyPress(state.V[x])
 		}
 		state.PC += 2
 	case high == 0xE && inst[1] == 0xA1:
