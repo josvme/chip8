@@ -15,3 +15,7 @@ func GetNibbles(inst []byte) (byte, byte, byte, byte) {
 
 	return a, b, c, d
 }
+
+func ModFn(x int, n int) int {
+	return ((x % n) + n) % n
+}

@@ -2,6 +2,7 @@ package core
 
 import (
 	"chip8/utils"
+	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -16,10 +17,12 @@ type Cpu struct {
 	display   IDisplay
 	sound     ISound
 	memory    *Memory
+	input     IInput
+	keyMap    map[byte]uint16
 }
 type CpuInternals struct {
 	V     [16]byte
-	I     [2]byte
+	I     uint16
 	Delay byte
 	Sound byte
 	PC    uint16
@@ -28,10 +31,14 @@ type CpuInternals struct {
 }
 
 func NewCpu(display IDisplay, sound ISound, memory *Memory) Cpu {
+	keymap := make(map[byte]uint16)
+	for i := 0; i < 16; i++ {
+		keymap[byte(i)] = uint16(i * 5)
+	}
 	return Cpu{
 		internals: CpuInternals{
 			V:     [16]byte{},
-			I:     [2]byte{},
+			I:     0,
 			Delay: 0,
 			Sound: 0,
 			PC:    programStart,
@@ -41,6 +48,7 @@ func NewCpu(display IDisplay, sound ISound, memory *Memory) Cpu {
 		display: display,
 		sound:   sound,
 		memory:  memory,
+		keyMap:  keymap,
 	}
 }
 
@@ -50,7 +58,7 @@ func (cpu *Cpu) Run() {
 		inst := cpu.memory.Mem[pc : pc+2]
 		fmt.Println(pc, hex.EncodeToString(inst))
 		cpu.executeInstruction(inst)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(4 * time.Millisecond)
 	}
 }
 
@@ -131,6 +139,69 @@ func (cpu *Cpu) executeInstruction(inst []byte) {
 	case high == 9 && low == 0:
 		if state.V[x] != state.V[y] {
 			state.PC += 2
+		}
+		state.PC += 2
+	case high == 0xA:
+		state.I = binary.BigEndian.Uint16([]byte{x, inst[1]})
+		state.PC += 2
+	case high == 0xB:
+		state.PC = binary.BigEndian.Uint16([]byte{x, inst[1]}) + uint16(state.V[0])
+	case high == 0xC:
+		r := make([]byte, 1)
+		rand.Read(r)
+		state.V[x] = inst[1] & r[0]
+		state.PC += 2
+	case high == 0xD:
+		vF := uint8(0)
+		for i := uint8(0); i < low; i++ {
+			vF = vF | cpu.display.drawPixels(state.V[x], state.V[y]+i, cpu.memory.Mem[state.I+uint16(i)])
+		}
+		// Set collision flag
+		state.V[F] = vF
+		state.PC += 2
+	case high == 0xE && inst[1] == 0x9E:
+		if cpu.input.isKeyPressed(state.V[x]) {
+			state.PC += 2
+		}
+		state.PC += 2
+	case high == 0xE && inst[1] == 0xA1:
+		if !cpu.input.isKeyPressed(state.V[x]) {
+			state.PC += 2
+		}
+		state.PC += 2
+	case high == 0xF && inst[1] == 0x07:
+		state.V[x] = state.Delay
+		state.PC += 2
+	case high == 0xF && inst[1] == 0x0A:
+		scanKey := cpu.input.scanKey()
+		state.V[x] = scanKey
+		state.PC += 2
+	case high == 0xF && inst[1] == 0x15:
+		state.Delay = x
+		state.PC += 2
+	case high == 0xF && inst[1] == 0x18:
+		state.Sound = state.V[x]
+		state.PC += 2
+	case high == 0xF && inst[1] == 0x1E:
+		state.I = state.I + uint16(state.V[x])
+		state.PC += 2
+	case high == 0xF && inst[1] == 0x29:
+		state.I = cpu.keyMap[state.V[x]]
+		state.PC += 2
+	case high == 0xF && inst[1] == 0x33:
+		bcd := int8(state.V[x])
+		cpu.memory.Mem[state.I] = byte(bcd / 100)
+		cpu.memory.Mem[state.I+1] = byte((bcd / 10) % 10)
+		cpu.memory.Mem[state.I+2] = byte(bcd % 10)
+		state.PC += 2
+	case high == 0xF && inst[1] == 0x55:
+		for i := 0; i <= int(x); i++ {
+			cpu.memory.Mem[int(state.I)+i] = state.V[i]
+		}
+		state.PC += 2
+	case high == 0xF && inst[1] == 0x65:
+		for i := 0; i <= int(x); i++ {
+			state.V[i] = cpu.memory.Mem[int(state.I)+i]
 		}
 		state.PC += 2
 	}
