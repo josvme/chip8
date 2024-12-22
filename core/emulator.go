@@ -32,9 +32,9 @@ func NewEmulator() *Emulator {
 	memory := NewMemory()
 	input := NewInput()
 	// Read file and load to memory
-	//rom, err := os.ReadFile("./roms/testrom/BC_test.ch8")
+	rom, err := os.ReadFile("./roms/testrom/BC_test.ch8")
 	//rom, err := os.ReadFile("./roms/demos/Zero Demo [zeroZshadow, 2007].ch8")
-	rom, err := os.ReadFile("./roms/games/Astro Dodge [Revival Studios, 2008].ch8")
+	//rom, err := os.ReadFile("./roms/games/Astro Dodge [Revival Studios, 2008].ch8")
 	// rom, err := os.ReadFile("./roms/demos/Maze (alt) [David Winter, 199x].ch8")
 	if err != nil {
 		panic("Unable to read rom")
