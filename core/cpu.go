@@ -118,6 +118,12 @@ func (cpu *Cpu) executeInstruction(inst []byte) {
 		state.V[x] = state.V[x] + state.V[y]
 		state.PC += 2
 	case high == 8 && low == 5:
+		// Update flags
+		if state.V[x] > state.V[y] {
+			state.V[F] = 1
+		} else {
+			state.V[F] = 0
+		}
 		state.V[x] = state.V[x] - state.V[y]
 		state.PC += 2
 	case high == 8 && low == 6:
@@ -133,8 +139,10 @@ func (cpu *Cpu) executeInstruction(inst []byte) {
 		state.V[x] = state.V[y] - state.V[x]
 		state.PC += 2
 	case high == 8 && low == 0xE:
-		state.V[F] = state.V[x] & 0b10000000
-		state.V[x] = state.V[x] * 2
+		msb := state.V[x] & 0b10000000
+		// We only need 1 bit as it is a flag and hence need to shift
+		state.V[F] = msb >> 7
+		state.V[x] = state.V[x] << 1
 		state.PC += 2
 	case high == 9 && low == 0:
 		if state.V[x] != state.V[y] {
@@ -189,10 +197,11 @@ func (cpu *Cpu) executeInstruction(inst []byte) {
 		state.I = cpu.keyMap[state.V[x]]
 		state.PC += 2
 	case high == 0xF && inst[1] == 0x33:
-		bcd := int8(state.V[x])
-		cpu.memory.Mem[state.I] = byte(bcd / 100)
-		cpu.memory.Mem[state.I+1] = byte((bcd / 10) % 10)
-		cpu.memory.Mem[state.I+2] = byte(bcd % 10)
+		// Already in uint8
+		bcd := state.V[x]
+		cpu.memory.Mem[state.I] = bcd / 100
+		cpu.memory.Mem[state.I+1] = (bcd / 10) % 10
+		cpu.memory.Mem[state.I+2] = bcd % 10
 		state.PC += 2
 	case high == 0xF && inst[1] == 0x55:
 		for i := 0; i <= int(x); i++ {
