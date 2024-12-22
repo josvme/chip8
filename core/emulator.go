@@ -2,9 +2,10 @@ package core
 
 import (
 	"fmt"
-	"github.com/veandco/go-sdl2/sdl"
 	"log"
 	"os"
+
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 const SCREEN_WIDTH = 64
@@ -30,20 +31,22 @@ func NewEmulator() *Emulator {
 	display := NewDisplay()
 	sound := NewSound()
 	memory := NewMemory()
+	input := NewInput()
 	// Read file and load to memory
 	//rom, err := os.ReadFile("./roms/testrom/BC_test.ch8")
-	rom, err := os.ReadFile("./roms/demos/Zero Demo [zeroZshadow, 2007].ch8")
+	//rom, err := os.ReadFile("./roms/demos/Zero Demo [zeroZshadow, 2007].ch8")
+	rom, err := os.ReadFile("./roms/games/Astro Dodge [Revival Studios, 2008].ch8")
 	// rom, err := os.ReadFile("./roms/demos/Maze (alt) [David Winter, 199x].ch8")
 	if err != nil {
 		panic("Unable to read rom")
 	}
 	memory.LoadDisk(rom)
 	return &Emulator{
-		cpu:     NewCpu(display, sound, memory),
+		cpu:     NewCpu(display, sound, memory, input),
 		mem:     memory,
 		display: display,
 		sound:   sound,
-		input:   NewInput(),
+		input:   input,
 	}
 }
 
@@ -96,6 +99,40 @@ func (emu *Emulator) handleInput() {
 			println("Emulator Stopped")
 			emu.running = false
 			break
+		case *sdl.KeyboardEvent:
+			keyCode := event.(*sdl.KeyboardEvent).Keysym.Scancode
+			switch keyCode {
+			case 4:
+				emu.input.registerKeyPress(0xC)
+			case 5:
+				emu.input.registerKeyPress(0xE)
+			case 6:
+				emu.input.registerKeyPress(0x3)
+			case 7:
+				emu.input.registerKeyPress(0x7)
+			case 8:
+				emu.input.registerKeyPress(0xB)
+			case 9:
+				emu.input.registerKeyPress(0xF)
+			case 30:
+				emu.input.registerKeyPress(0x0)
+			case 31:
+				emu.input.registerKeyPress(0x1)
+			case 32:
+				emu.input.registerKeyPress(0x2)
+			case 33:
+				emu.input.registerKeyPress(0x4)
+			case 34:
+				emu.input.registerKeyPress(0x5)
+			case 35:
+				emu.input.registerKeyPress(0x6)
+			case 36:
+				emu.input.registerKeyPress(0x8)
+			case 37:
+				emu.input.registerKeyPress(0x9)
+			case 38:
+				emu.input.registerKeyPress(0xA)
+			}
 		}
 	}
 }
