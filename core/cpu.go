@@ -58,7 +58,7 @@ func (cpu *Cpu) Run() {
 		inst := cpu.memory.Mem[pc : pc+2]
 		fmt.Println(pc, hex.EncodeToString(inst))
 		cpu.executeInstruction(inst)
-		time.Sleep(4 * time.Millisecond)
+		time.Sleep(2 * time.Millisecond)
 	}
 }
 
